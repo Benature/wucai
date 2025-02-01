@@ -4,6 +4,8 @@ import ast
 from pathlib import Path
 from typing import List
 
+FILE_DIR = Path(__file__).parent
+
 REQUIREMENTS_SPEC = 'requirements.txt'
 PACKAGE_ENTRY = 'wucai'
 VERSION_FLAG = '__version__'
@@ -13,7 +15,8 @@ with open("README.md", "r") as fh:
 
 
 def read_requirements() -> List[str]:
-    p = Path(__file__).parent / REQUIREMENTS_SPEC
+    print(list(FILE_DIR.glob('*')))
+    p = FILE_DIR / REQUIREMENTS_SPEC
     with open(str(p), 'r', encoding='utf-8') as f:
         rows = f.readlines()
 
@@ -68,10 +71,10 @@ setuptools.setup(
     #         'alt=autolatex:excel2table',
     #     ],
     # },
-    classifiers=(
+    classifiers=[
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-    ),
+    ],
     python_requires='>=3.7',
 )
