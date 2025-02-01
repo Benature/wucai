@@ -39,7 +39,7 @@ setuptools.setup(
     author="Benature Wang",
     author_email="benature246@gmail.com",
     description=
-    "python API for wucai ( https://www.wucainote.com , https://marker.dotalk.cn )",
+    "五彩 Python API | python API for wucai ( https://www.wucainote.com , https://marker.dotalk.cn )",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Benature/wucai",

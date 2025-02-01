@@ -1,6 +1,10 @@
+<a href="https://wucaiapp.com/"><img src="https://www.wucainote.com/_next/image?url=%2Flogo.png&w=64&q=75" height="50" align="right"></a>
+
 # 五彩 Python API
 python API for wucai ( https://www.wucainote.com , https://marker.dotalk.cn )
 
+
+[![PyPI](https://img.shields.io/pypi/v/wucai)](https://pypi.org/project/wucai/)
 
 ## 安装 Install
 
