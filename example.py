@@ -1,18 +1,3 @@
-# 五彩 Python API
-python API for wucai ( https://www.wucainote.com , https://marker.dotalk.cn )
-
-
-## 安装 Install
-
-```
-pip install wucai
-```
-
-## 使用 Usage
-
-`token` 请在网页 F12 - Network 中获取
-
-```python
 from wucai import WuCai
 
 token = "eyJxxxxxx"  # your Bearer token here
@@ -32,5 +17,4 @@ notes_response = wucai.searchTagNote(tags=tags)
 if notes_response['code'] == 1:
     for note in notes_response['data']['list']:
         print(note)
-        break
-```
+        breakpoint
