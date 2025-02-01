@@ -14,26 +14,6 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
-def read_requirements() -> List[str]:
-    print(list(FILE_DIR.glob('*')))
-    p = FILE_DIR / REQUIREMENTS_SPEC
-    with open(str(p), 'r', encoding='utf-8') as f:
-        rows = f.readlines()
-
-    requirements = list()
-    for r in rows:
-        r = r.strip()
-        if not r:
-            continue
-
-        if r.startswith('#'):
-            continue
-
-        requirements.append(r)
-
-    return requirements
-
-
 def get_version() -> str:
     p = Path(__file__).parent / PACKAGE_ENTRY / '__init__.py'
 
@@ -64,7 +44,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Benature/wucai",
     packages=setuptools.find_packages(),
-    install_requires=read_requirements(),
+    install_requires=['requests', 'bs4', 'lxml'],
     # entry_points={
     #     'console_scripts': [
     #         'autolatex=autolatex:excel2table',
