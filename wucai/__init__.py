@@ -6,7 +6,7 @@ from subprocess import Popen, PIPE
 import random
 from typing import Dict, List
 
-__version__ = "0.0.2"
+__version__ = "0.0.2b2"
 
 
 class WuCai():
