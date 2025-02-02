@@ -21,7 +21,7 @@ class WuCai():
             token (str): Bearer token
         """
         self.version = version or "24.10.10"
-        self.appID = str(appId) is appId is not None or "20"
+        self.appId = str(appId) if appId is not None else "20"
         self.ep = "web"
         self.authorization = "Bearer " + token
         self.url_prefix = "https://marker.dotalk.cn/apix/wucai"
@@ -202,7 +202,7 @@ class WuCai():
     def _get_params(self, data_json: Dict):
         signx = self._calc_signx(data_json)
         params = {
-            "appid": self.appID,
+            "appid": self.appId,
             "ep": self.ep,
             "version": self.version,
             "signx": signx,
