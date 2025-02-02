@@ -164,6 +164,22 @@ class WuCai():
         tags = list(current_tags_set.difference(tags_set))
         return self.updateTags(noteId, tags)
 
+    def moveToFolder(self, noteIds: List[int] | int, folderId: int,
+                     fullPath: str):
+        """移动至文件夹"""
+        if not isinstance(noteIds, list):
+            noteIds = [noteIds]
+        payload = {
+            "noteIds": noteIds,
+            "folderId": folderId,
+            "fullPath": fullPath
+        }
+        return self.cUrl("note/movetofolder", payload)
+
+    def createFolder(self, fullPath: str):
+        """创建文件夹"""
+        return self.cUrl("folder/create", {"fullPath": fullPath})
+
     def cUrl(self, func: str, payload: Dict):
         """query data via curl, as requests failed to handle the data correctly for unknown reasons
         
