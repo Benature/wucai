@@ -5,8 +5,9 @@ import json
 from subprocess import Popen, PIPE
 import random
 from typing import Dict, List
+from typing_extensions import Literal
 
-__version__ = "0.0.2b2"
+__version__ = "0.0.3"
 
 
 class WuCai():
@@ -31,25 +32,53 @@ class WuCai():
     def searchTagNote(self,
                       tags: str = None,
                       noteIdx: str = None,
+                      nav: Literal['today', 'inbox', 'later', 'archive',
+                                   'star', 'daily', 'all', 'trash',
+                                   'untag'] = None,
+                      sortBy: Literal['time-desc', 'time-asc', 'utime-desc',
+                                      'stars-desc'] = 'time-desc',
                       page: int = 1,
-                      pageSize: int = 11) -> Dict:
+                      pageSize: int = 11,
+                      maxPage: int = None) -> List[Dict]:
         """根据 tags/noteIdx 搜索笔记
         
         Args:
             tags (str, optional): tag. Defaults to None.
             noteIdx (str, optional): noteIdx. Defaults to None.
+            nav (Literal['today', 'inbox', 'later', 'archive', 'star', 'daily', 'all', 'trash', 'untag'], optional): 
+                导航栏. Defaults to None.
+                
+                - today: 24小时
+                - inbox: Inbox
+                - later: 稍读
+                - archive: 归档
+                - star: 星标
+                - daily: Daily
+                - all: 所有
+                - trash: 回收站
+                
+            sortBy (Literal['time-desc', 'time-asc', 'utime-desc','stars-desc'], optional): 
+                排序方式. Defaults to 'time-desc'.
             page (int, optional): page. Defaults to 1.
             pageSize (int, optional): pageSize. Defaults to 11.
             
         Returns:
             Dict: 笔记列表
         """
-        assert (tags is not None) ^ (
-            noteIdx is not None), "tags or noteIdx should be provided one"
+        if maxPage is None:
+            if page > pageSize:
+                return []
+        else:
+            if page > maxPage:
+                return []
+
+        assert (
+            (tags is not None) ^ (noteIdx is not None) ^
+            (nav is not None)), "tags or noteIdx or nav should be provided one"
         payload = {
             "page": page,
             "pagesize": pageSize,
-            "sort": "time-desc",
+            "sort": sortBy,
             "pageId": 0,
             "tmhl": 0,
             "fid": 0,
@@ -60,15 +89,28 @@ class WuCai():
             payload['tags'] = tags
         if noteIdx is not None:
             payload['noteidx'] = noteIdx
+        if nav is not None:
+            payload['in'] = nav
 
         response = self.cUrl("user/searchtagnote", payload)
-        return response
+        this_page = response['data']['list']
+        if this_page is None:
+            return []
+        self.random_sleep()
+        next_page = self.searchTagNote(tags=tags,
+                                       noteIdx=noteIdx,
+                                       nav=nav,
+                                       sortBy=sortBy,
+                                       page=page + 1,
+                                       pageSize=pageSize,
+                                       maxPage=maxPage)
+        return this_page + next_page
 
     def indexCardList(self,
                       tags: str = None,
                       page: int = 1,
                       pageSize: int = 26,
-                      page_max: int = None) -> List:
+                      maxPage: int = None) -> List:
         """获取卡片列表
         
         Args:
@@ -80,11 +122,11 @@ class WuCai():
         Returns:
             List: 卡片列表
         """
-        if page_max is None:
+        if maxPage is None:
             if page > pageSize:
                 return []
         else:
-            if page > page_max:
+            if page > maxPage:
                 return []
 
         payload = {
@@ -146,7 +188,7 @@ class WuCai():
 
         if isinstance(new_tags, str):
             new_tags = new_tags.split(",")
-        new_tags_set = set(map(lambda x: "#" + x.strip().rstrip("#"),
+        new_tags_set = set(map(lambda x: "#" + x.strip().lstrip("#"),
                                new_tags))
 
         tags = list(current_tags_set.union(new_tags_set))
