@@ -7,7 +7,7 @@ import random
 from typing import Dict, List
 from typing_extensions import Literal
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 class WuCai():
@@ -31,15 +31,15 @@ class WuCai():
 
     def search_tag_note(self,
                         tags: str = None,
-                        noteIdx: str = None,
+                        note_idx: str = None,
                         nav: Literal['today', 'inbox', 'later', 'archive',
                                      'star', 'daily', 'all', 'trash',
                                      'untag'] = None,
-                        sortBy: Literal['time-desc', 'time-asc', 'utime-desc',
-                                        'stars-desc'] = 'time-desc',
+                        order: Literal['time-desc', 'time-asc', 'utime-desc',
+                                       'stars-desc'] = 'time-desc',
                         page: int = 1,
-                        pageSize: int = 11,
-                        maxPage: int = None) -> List[Dict]:
+                        page_size: int = 11,
+                        page_max: int = None) -> List[Dict]:
         """根据 tags/noteIdx 搜索笔记
         
         Args:
@@ -65,20 +65,20 @@ class WuCai():
         Returns:
             Dict: 笔记列表
         """
-        if maxPage is None:
-            if page > pageSize:
+        if page_max is None:
+            if page > page_size:
                 return []
         else:
-            if page > maxPage:
+            if page > page_max:
                 return []
 
         assert (
-            (tags is not None) ^ (noteIdx is not None) ^
+            (tags is not None) ^ (note_idx is not None) ^
             (nav is not None)), "tags or noteIdx or nav should be provided one"
         payload = {
             "page": page,
-            "pagesize": pageSize,
-            "sort": sortBy,
+            "pagesize": page_size,
+            "sort": order,
             "pageId": 0,
             "tmhl": 0,
             "fid": 0,
@@ -87,8 +87,8 @@ class WuCai():
 
         if tags is not None:
             payload['tags'] = tags
-        if noteIdx is not None:
-            payload['noteidx'] = noteIdx
+        if note_idx is not None:
+            payload['noteidx'] = note_idx
         if nav is not None:
             payload['in'] = nav
 
@@ -98,19 +98,19 @@ class WuCai():
             return []
         self.random_sleep()
         next_page = self.search_tag_note(tags=tags,
-                                         noteIdx=noteIdx,
+                                         note_idx=note_idx,
                                          nav=nav,
-                                         sortBy=sortBy,
+                                         order=order,
                                          page=page + 1,
-                                         pageSize=pageSize,
-                                         maxPage=maxPage)
+                                         page_size=page_size,
+                                         page_max=page_max)
         return this_page + next_page
 
     def index_card_list(self,
                         tags: str = None,
                         page: int = 1,
-                        pageSize: int = 26,
-                        maxPage: int = None) -> List:
+                        page_size: int = 26,
+                        page_max: int = None) -> List:
         """获取卡片列表
         
         Args:
@@ -122,16 +122,16 @@ class WuCai():
         Returns:
             List: 卡片列表
         """
-        if maxPage is None:
-            if page > pageSize:
+        if page_max is None:
+            if page > page_size:
                 return []
         else:
-            if page > maxPage:
+            if page > page_max:
                 return []
 
         payload = {
             'page': page,
-            'pagesize': pageSize,
+            'pagesize': page_size,
             'sort': 'time-desc',
             'pageId': 0,
             'myid': 0,
@@ -149,7 +149,7 @@ class WuCai():
         next_page = self.index_card_list(tags=tags, page=page + 1)
         return response['data']['items'] + next_page
 
-    def detail(self, noteId: int) -> Dict:
+    def detail(self, note_id: int) -> Dict:
         """根据 noteId 获取笔记详情
         
         Args:
@@ -158,10 +158,10 @@ class WuCai():
         Returns:
             Dict: 笔记详情
         """
-        payload = {"noteId": int(noteId)}
+        payload = {"noteId": int(note_id)}
         return self.curl("note/detail", payload)
 
-    def update_tags(self, noteId: int, tags: str | List[str]):
+    def update_tags(self, note_id: int, tags: str | List[str]):
         """更新标签"""
         if isinstance(tags, str):
             tags = tags.split(",")
@@ -174,16 +174,16 @@ class WuCai():
         tags_string = ",".join(tags)
 
         payload = {
-            "noteId": noteId,
+            "noteId": note_id,
             "tags": tags_string,
         }
         return self.curl("note/updatetags", payload)
 
-    def add_tags(self, noteId: int, new_tags: str | List[str]):
+    def add_tags(self, note_id: int, new_tags: str | List[str]):
         """添加标签"""
         # get current tags
         current_tags_set = set(
-            self.detail(noteId)['data']['items'][0]['tags'] or [])
+            self.detail(note_id)['data']['items'][0]['tags'] or [])
 
         if isinstance(new_tags, str):
             new_tags = new_tags.split(",")
@@ -191,35 +191,35 @@ class WuCai():
                                new_tags))
 
         tags = list(current_tags_set.union(new_tags_set))
-        return self.update_tags(noteId, tags)
+        return self.update_tags(note_id, tags)
 
-    def remove_tags(self, noteId: int, tags: str | List[str]):
+    def remove_tags(self, note_id: int, tags: str | List[str]):
         """删除标签"""
         # get current tags
         current_tags_set = set(
-            self.detail(noteId)['data']['items'][0]['tags'] or [])
+            self.detail(note_id)['data']['items'][0]['tags'] or [])
         if isinstance(tags, str):
             tags = tags.split(",")
         tags_set = set(map(lambda x: "#" + x.strip().rstrip("#"), tags))
 
         tags = list(current_tags_set.difference(tags_set))
-        return self.update_tags(noteId, tags)
+        return self.update_tags(note_id, tags)
 
-    def move_to_folder(self, noteIds: List[int] | int, folderId: int,
-                       fullPath: str):
+    def move_to_folder(self, note_ids: List[int] | int, folder_id: int,
+                       full_path: str):
         """移动至文件夹"""
-        if not isinstance(noteIds, list):
-            noteIds = [noteIds]
+        if not isinstance(note_ids, list):
+            note_ids = [note_ids]
         payload = {
-            "noteIds": noteIds,
-            "folderId": folderId,
-            "fullPath": fullPath
+            "noteIds": note_ids,
+            "folderId": folder_id,
+            "fullPath": full_path
         }
         return self.curl("note/movetofolder", payload)
 
-    def create_folder(self, fullPath: str):
+    def create_folder(self, full_path: str):
         """创建文件夹"""
-        return self.curl("folder/create", {"fullPath": fullPath})
+        return self.curl("folder/create", {"fullPath": full_path})
 
     def curl(self, func: str, payload: Dict):
         """query data via curl, as requests failed to handle the data correctly for unknown reasons
