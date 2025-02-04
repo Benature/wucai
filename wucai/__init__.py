@@ -7,39 +7,39 @@ import random
 from typing import Dict, List
 from typing_extensions import Literal
 
-__version__ = "0.0.3"
+__version__ = "0.1.0"
 
 
 class WuCai():
 
     def __init__(self,
                  token: str,
-                 appId: str = None,
+                 app_id: str = None,
                  version: str = None,
                  random_sleep: bool | int = True) -> None:
         """
         Args:
             token (str): Bearer token
         """
-        self.version = version or "24.10.10"
-        self.appId = str(appId) if appId is not None else "20"
+        self.version = version or "25.2.3"
+        self.app_id = str(app_id) if app_id is not None else "20"
         self.ep = "web"
         self.authorization = "Bearer " + token
-        self.url_prefix = "https://marker.dotalk.cn/apix/wucai"
+        self.preAPI = "https://marker.dotalk.cn/apix/wucai"
         self.random_sleep_time = int(random_sleep) if isinstance(
             random_sleep, bool) else random_sleep
 
-    def searchTagNote(self,
-                      tags: str = None,
-                      noteIdx: str = None,
-                      nav: Literal['today', 'inbox', 'later', 'archive',
-                                   'star', 'daily', 'all', 'trash',
-                                   'untag'] = None,
-                      sortBy: Literal['time-desc', 'time-asc', 'utime-desc',
-                                      'stars-desc'] = 'time-desc',
-                      page: int = 1,
-                      pageSize: int = 11,
-                      maxPage: int = None) -> List[Dict]:
+    def search_tag_note(self,
+                        tags: str = None,
+                        noteIdx: str = None,
+                        nav: Literal['today', 'inbox', 'later', 'archive',
+                                     'star', 'daily', 'all', 'trash',
+                                     'untag'] = None,
+                        sortBy: Literal['time-desc', 'time-asc', 'utime-desc',
+                                        'stars-desc'] = 'time-desc',
+                        page: int = 1,
+                        pageSize: int = 11,
+                        maxPage: int = None) -> List[Dict]:
         """根据 tags/noteIdx 搜索笔记
         
         Args:
@@ -92,25 +92,25 @@ class WuCai():
         if nav is not None:
             payload['in'] = nav
 
-        response = self.cUrl("user/searchtagnote", payload)
+        response = self.curl("user/searchtagnote", payload)
         this_page = response['data']['list']
         if this_page is None:
             return []
         self.random_sleep()
-        next_page = self.searchTagNote(tags=tags,
-                                       noteIdx=noteIdx,
-                                       nav=nav,
-                                       sortBy=sortBy,
-                                       page=page + 1,
-                                       pageSize=pageSize,
-                                       maxPage=maxPage)
+        next_page = self.search_tag_note(tags=tags,
+                                         noteIdx=noteIdx,
+                                         nav=nav,
+                                         sortBy=sortBy,
+                                         page=page + 1,
+                                         pageSize=pageSize,
+                                         maxPage=maxPage)
         return this_page + next_page
 
-    def indexCardList(self,
-                      tags: str = None,
-                      page: int = 1,
-                      pageSize: int = 26,
-                      maxPage: int = None) -> List:
+    def index_card_list(self,
+                        tags: str = None,
+                        page: int = 1,
+                        pageSize: int = 26,
+                        maxPage: int = None) -> List:
         """获取卡片列表
         
         Args:
@@ -140,13 +140,13 @@ class WuCai():
         if tags is not None:
             payload['tags'] = tags
 
-        response = self.cUrl("user/indexcardlist", payload)
+        response = self.curl("user/indexcardlist", payload)
         if response['code'] != 1:
             return []
         if response['data']['items'] is None:
             return []
         self.random_sleep()
-        next_page = self.indexCardList(tags=tags, page=page + 1)
+        next_page = self.index_card_list(tags=tags, page=page + 1)
         return response['data']['items'] + next_page
 
     def detail(self, noteId: int) -> Dict:
@@ -159,11 +159,10 @@ class WuCai():
             Dict: 笔记详情
         """
         payload = {"noteId": int(noteId)}
-        return self.cUrl("note/detail", payload)
+        return self.curl("note/detail", payload)
 
-    def updateTags(self, noteId: int, tags: str | List[str]):
+    def update_tags(self, noteId: int, tags: str | List[str]):
         """更新标签"""
-
         if isinstance(tags, str):
             tags = tags.split(",")
 
@@ -178,9 +177,9 @@ class WuCai():
             "noteId": noteId,
             "tags": tags_string,
         }
-        return self.cUrl("note/updatetags", payload)
+        return self.curl("note/updatetags", payload)
 
-    def addTags(self, noteId: int, new_tags: str | List[str]):
+    def add_tags(self, noteId: int, new_tags: str | List[str]):
         """添加标签"""
         # get current tags
         current_tags_set = set(
@@ -192,9 +191,9 @@ class WuCai():
                                new_tags))
 
         tags = list(current_tags_set.union(new_tags_set))
-        return self.updateTags(noteId, tags)
+        return self.update_tags(noteId, tags)
 
-    def removeTags(self, noteId: int, tags: str | List[str]):
+    def remove_tags(self, noteId: int, tags: str | List[str]):
         """删除标签"""
         # get current tags
         current_tags_set = set(
@@ -204,10 +203,10 @@ class WuCai():
         tags_set = set(map(lambda x: "#" + x.strip().rstrip("#"), tags))
 
         tags = list(current_tags_set.difference(tags_set))
-        return self.updateTags(noteId, tags)
+        return self.update_tags(noteId, tags)
 
-    def moveToFolder(self, noteIds: List[int] | int, folderId: int,
-                     fullPath: str):
+    def move_to_folder(self, noteIds: List[int] | int, folderId: int,
+                       fullPath: str):
         """移动至文件夹"""
         if not isinstance(noteIds, list):
             noteIds = [noteIds]
@@ -216,13 +215,13 @@ class WuCai():
             "folderId": folderId,
             "fullPath": fullPath
         }
-        return self.cUrl("note/movetofolder", payload)
+        return self.curl("note/movetofolder", payload)
 
-    def createFolder(self, fullPath: str):
+    def create_folder(self, fullPath: str):
         """创建文件夹"""
-        return self.cUrl("folder/create", {"fullPath": fullPath})
+        return self.curl("folder/create", {"fullPath": fullPath})
 
-    def cUrl(self, func: str, payload: Dict):
+    def curl(self, func: str, payload: Dict):
         """query data via curl, as requests failed to handle the data correctly for unknown reasons
         
         Args:
@@ -232,10 +231,10 @@ class WuCai():
         Returns:
             Dict: response data
         """
-        payload["reqtime"] = self._get_reqTime()
+        payload["reqtime"] = int(time.time())
         params = self._get_params(payload)
         params_string = "&".join([f"{k}={v}" for k, v in params.items()])
-        cmd = f"""curl --location '{self.url_prefix}/{func}?{params_string}' \
+        cmd = f"""curl --location '{self.preAPI}/{func}?{params_string}' \
                   --header 'Authorization: {self.authorization}' \
                   --header 'Content-Type: application/json' \
                   --data '{json.dumps(payload).replace(" ", "")}'
@@ -245,26 +244,22 @@ class WuCai():
         payload = json.loads(response_text)
         return payload
 
-    def _get_reqTime(self):
-        """get current timestamp"""
-        return int(time.time())
-
-    def _calc_signx(self, data_json: Dict):
+    def _calc_signx(self, payload: Dict):
         """calculate signx"""
         Fa = lambda e: hashlib.md5((e).encode("utf-8")).hexdigest()
         l = '166p7jjd83L8m5Mk'
-        c = json.dumps(data_json).replace(" ", "")
+        c = json.dumps(payload).replace(" ", "")
         signx = Fa(l + Fa(c + l))
         return signx
 
-    def _get_params(self, data_json: Dict):
-        signx = self._calc_signx(data_json)
+    def _get_params(self, payload: Dict):
+        signx = self._calc_signx(payload)
         params = {
-            "appid": self.appId,
+            "appid": self.app_id,
             "ep": self.ep,
             "version": self.version,
             "signx": signx,
-            "reqtime": str(data_json['reqtime']),
+            "reqtime": str(payload['reqtime']),
         }
         return params
 
