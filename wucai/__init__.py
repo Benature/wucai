@@ -6,8 +6,19 @@ from subprocess import Popen, PIPE
 import random
 from typing import Dict, List
 from typing_extensions import Literal
+import datetime
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
+
+
+def timestamp(t):
+    if isinstance(t, datetime.date):
+        return int(
+            datetime.datetime.strptime(t.isoformat(), "%Y-%m-%d").timestamp())
+    elif isinstance(t, datetime.datetime):
+        return int(t.timestamp())
+    else:
+        raise ValueError(f"Invalid timestamp {type(t)}")
 
 
 class WuCai():
@@ -108,6 +119,9 @@ class WuCai():
 
     def index_card_list(self,
                         tags: str = None,
+                        nav: Literal['today', 'all'] = 'all',
+                        order: Literal['time-desc', 'time-asc',
+                                       'utime-desc'] = 'time-desc',
                         page: int = 1,
                         page_size: int = 26,
                         page_max: int = None) -> List:
@@ -116,23 +130,20 @@ class WuCai():
         Args:
             tags (str, optional): tag. Defaults to None. 可按 tag 进行搜索卡片。
             page (int, optional): 从第几页开始获取列表. Defaults to 1，默认从第一页开始。
-            pageSize (int, optional): 每页大小. Defaults to 26.
+            page_size (int, optional): 每页大小. Defaults to 26.
             page_max (int, optional): 最大页数. Defaults to None.
             
         Returns:
             List: 卡片列表
         """
-        if page_max is None:
-            if page > page_size:
-                return []
-        else:
-            if page > page_max:
-                return []
+        if page_max is not None and page > page_max:
+            return []
 
         payload = {
+            'in': nav,
             'page': page,
             'pagesize': page_size,
-            'sort': 'time-desc',
+            'sort': order,
             'pageId': 0,
             'myid': 0,
             'tmhl': 0,
@@ -146,7 +157,12 @@ class WuCai():
         if response['data']['items'] is None:
             return []
         self.random_sleep()
-        next_page = self.index_card_list(tags=tags, page=page + 1)
+        next_page = self.index_card_list(tags=tags,
+                                         nav=nav,
+                                         order=order,
+                                         page=page + 1,
+                                         page_size=page_size,
+                                         page_max=page_max)
         return response['data']['items'] + next_page
 
     def detail(self, note_id: int) -> Dict:
@@ -265,3 +281,7 @@ class WuCai():
 
     def random_sleep(self):
         time.sleep(random.random() * self.random_sleep_time)
+
+    @staticmethod
+    def timestamp(*args, **kwargs):
+        return timestamp(*args, **kwargs)
